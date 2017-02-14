@@ -1,0 +1,5 @@
+# search_pattern	replace_pattern	regex_type	# comment
+<sup>2</sup>	 squared 	# Convert
+<sup>				# Remove <sup>/<sub> tags
+<sup>
+

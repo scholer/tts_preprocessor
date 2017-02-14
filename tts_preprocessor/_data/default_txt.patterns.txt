@@ -1,0 +1,63 @@
+# regex_type: 0=Python regex, 1=Fixed-string
+# search_pattern	replace_pattern	regex_type	# comment
+Å	 Angstrom 	1
+nm	 nanometer 	1
+um	 micrometer 	1
+μm	 micrometer 	1
+uM	 micro  molar	1
+μM	 micro  molar	1
+μ	 micron 	1
+ɑ	 alpha 	1
+Α	 Alpha 	1
+α	 alpha 	1
+Β	 Beta 	1
+β	 beta 	1
+Γ	 Gamma 	1
+γ	 gamma 	1
+Δ	 Delta 	1
+δ	 delta 	1
+Ε	 Epsilon 	1
+ε	 epsilon 	1
+Ζ	 Zeta 	1
+ζ	 zeta 	1
+Η	 Eta 	1
+η	 eta 	1
+Θ	 Theta 	1
+θ	 theta 	1
+Ι	 Iota 	1
+ι	 iota 	1
+Κ	 Kappa 	1
+κ	 kappa 	1
+Λ	 Lambda 	1
+λ	 lambda 	1
+Μ	 Mu 	1
+μ	 mu 	1
+Ν	 Nu 	1
+ν	 nu 	1
+Ξ	 Xi 	1
+ξ	 xi 	1
+Ο	 Omicron 	1
+ο	 omicron 	1
+Π	 Pi 	1
+π	 pi 	1
+Ρ	 Rho 	1
+ρ	 rho 	1
+Σ	 Sigma 	1
+σ	 sigma 	1
+Τ	 Tau 	1
+τ	 tau 	1
+Υ	 Upsilon 	1
+υ	 upsilon 	1
+Φ	 Phi 	1
+φ	 phi 	1
+Χ	 Chi 	1
+χ	 chi 	1
+Ψ	 Psi 	1
+ψ	 psi 	1
+Ω	 Omega 	1
+ω	 omega 	1
+et. al.	and co-workers
+et al.	and co-workers
+5′	5-prime
+3′	3-prime
+2′	2-prime

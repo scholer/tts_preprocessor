@@ -1,0 +1,25 @@
+# search_pattern	replace_pattern	regex_type	# comment
+\sup{2}	 squared 	1	# Convert to " squared " (fixed string pattern)
+(?<!%)\%(?!%).*					# Remove comments
+# \\(?P<heading>(sub)*section|paragraph|caption)(?P<params>\[.*\])*(?P<content>\{.*\})*	\n\1: \n\2	# Section headers, captions
+\\(?P<heading>(sub)*section|chapter|paragraph|caption)(?P<params>\[.*\])*\{(?P<content>.*?)\}	\n\g<heading>: \g<content>\n	# Section headers, captions
+
+\\(?P<cmd>epigraph)(?P<params>\[.*?\])*\{[`'"]*(?P<content>.*?)[`'"]*\}\{(?P<source>.*?)\}+	\nQuote: \g<content>. \g<source>	# epigraph quote
+\\(?P<cmd>mbox|text.*?)(?P<params>\[.*?\])*\{(?P<content>.*?)\}	\g<content> 	# Text formatting commands (keep content)
+\\(?P<cmd>SI)(?P<params>\[.*?\])*\{(?P<value>.*?)\}\{(?P<unit>.*?)\}	\g<value> \g<unit>	# SI command
+\\(?P<cmd>SIrange)(?P<params>\[.*?\])*\{(?P<value>.*?)\}\{(?P<stop>.*?)\}\{(?P<unit>.*?)\}	from \g<value> to \g<stop> \g<unit>	# SI range
+\$\\cdots\$	-to-	# Replace : with '-to-'
+# \[.*\]						# Remove references inside brackets
+\dots	…	# Ellipsis
+\\\s	 						# Convert non-breaking whitespace to space
+(?<!%)~(?!%)	 				# Convert non-breaking space (tilde ~ latex code) to space
+
+#
+~?\\\w+((\{.*?\})*)((\[.*?\])*)	# Remove all remaining latex commands, capturing all parameters, optional last
+
+# Remove all remaining commands:
+# ~?\\\w+(\[.*\])*(\{.*\})*		# Remove all remaining latex commands (capturing one/the last parameter)
+# ~?\\\w+((\[.*?\])*)((\{.*?\})*)	# Remove all remaining latex commands (capturing all parameters)
+
+~?\\\w+((\{.*?\})*)((\[.*?\])*)	# Remove all remaining latex commands, capturing all parameters, optional last
+
