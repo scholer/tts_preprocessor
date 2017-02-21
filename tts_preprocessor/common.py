@@ -27,7 +27,7 @@ def default_argparser(**ap_kwargs):
     ap.add_argument('--patternsfile')
     ap.add_argument('-d', '--named-directive', nargs="+", action="append")  # Use standard/default named directives
     # ap.add_argument('--patternsformat')  # how to load patternsfile; yaml/json/txt/tsv/csv; default: tsv
-    ap.add_argument('--outputfnfmt', default="{fnbase}.out{fnext}")
+    ap.add_argument('--outputfnfmt', default="{fnroot}.out{fnext}")
     ap.add_argument('--inputencoding', default='utf-8')
     ap.add_argument('--outputencoding', default='utf-8')
     ap.add_argument('--verbose', action="count", default=0)
@@ -41,14 +41,25 @@ def process_file(inputfile, directives, outputfnfmt=None, inputencoding=None, ou
         inputencoding = 'utf-8'
     if outputencoding is None:
         outputencoding = inputencoding
-    fnbase, fnext = os.path.splitext(inputfile)
+    fnroot, fnext = os.path.splitext(inputfile)
+    fnbasename = os.path.basename(inputfile)
+    fnbase_noext = os.path.basename(fnroot)
+    fndir = os.path.dirname(inputfile)
     with open(inputfile, encoding=inputencoding) as fp:
         print("Reading file:", inputfile)
         content = fp.read()
 
     content = substitute_patterns(content, directives, verbose=verbose)
-
-    outputfn = outputfnfmt.format(inputfile=inputfile, fnbase=fnbase, fnext=fnext)
+    # filepath = /mydirectory/myfile.ext
+    # basename = myfile.ext  (or sometimes just `myfile` - os.path.basename() returns WITH extension)
+    # filename = myfile.ext  (or sometimes just `myfile` and other times the whole filepath)
+    # rootname = /mydirectory/myfile
+    # so what to call `myfile`?
+    # It is rootname of basename (and also basename of rootname)... So maybe baseroot(name) or rootbase(name)?
+    # Or maybe just use `fnbase_noext` (for basename with no extension).
+    outputfn = outputfnfmt.format(
+        inputfile=inputfile, fnroot=fnroot, fnext=fnext, fnbasename=fnbasename, fndir=fndir, fnbase_noext=fnbase_noext,
+        cwd=os.getcwd())
     with open(outputfn, mode='w', encoding=outputencoding) as fp:
         print("Writing file:", outputfn)
         fp.write(content)

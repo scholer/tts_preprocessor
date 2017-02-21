@@ -2,6 +2,11 @@
 """
 Module for changing encoding of files.
 
+See also:
+    `iconv` - unix tool to convert text encodings:
+        $ iconv -f CP1252 -t utf-8 inputfile
+
+
 """
 
 
@@ -30,7 +35,7 @@ def main():
     except ImportError as e:
         print("Module `chardet` not available; will use 'utf8' as default encoding (when not specified).")
 
-    for inputfn in argns.inputfiles:
+    for inputfn in inputfiles:
         _encoding = inputencoding
         fnbase, fnext = os.path.splitext(inputfn)
         outputfn = outputfnfmt.format(inputfn=inputfn, fnbase=fnbase, fnext=fnext,
@@ -42,7 +47,7 @@ def main():
                 continue
         if _encoding is None:
             # Use chardet
-            # OBS: Not actually very good at detecting e.g. Danish characters in Windows-1252.
+            # OBS: Not actually very good at detecting e.g. Danish characters in Windows-1252 / CP1252.
             with open(inputfn, 'rb') as fp:
                 file_bytes = fp.read()
                 try:
@@ -54,8 +59,11 @@ def main():
         with open(inputfn, encoding=_encoding) as fp:
             print("Reading %s" % inputfn)
             content = fp.read()
-        with open(outputfn, encoding=outputencoding) as fp:
+        with open(outputfn, mode='w', encoding=outputencoding) as fp:
             print("(Re-)writing content to file:", outputfn)
             fp.write(content)
             print(" - Done!")
 
+
+if __name__ == '__main__':
+    main()

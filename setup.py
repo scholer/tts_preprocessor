@@ -14,10 +14,12 @@ setup(
         'console_scripts': [
             # These should all be lower-case, else you may get an error when uninstalling:
             'tts_preprocessor=tts_preprocessor.common:main',
+            'latex_tts_preprocessor=tts_preprocessor.latex_processing:main',
+            'latex_to_tts_text=tts_preprocessor.latex_processing:main',
         ],
     },
     # pip will install these modules as requirements.
     install_requires=[
-        'yaml',
+        'pyyaml',  # yaml?
     ],
 )
