@@ -4,7 +4,7 @@ Module for changing encoding of files.
 
 See also:
     `iconv` - unix tool to convert text encodings:
-        $ iconv -f CP1252 -t utf-8 inputfile
+        $ iconv -f CP1252 -t utf-8 inputfile > outputfile
 
 
 """

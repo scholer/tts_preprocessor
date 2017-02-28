@@ -1,23 +1,37 @@
 """
 
+Nomenclature:
+-------------
+
+Directive name: Name of a directive, e.g. 'latex_to_text'
+
+Op / operation: A single operation, e.g. a substitution operation defined by a ReplacementTuple.
+    Directive ops include:
+        * Substitutions (regex or fixed-string)
+
+Directive def: The full sequence of operations defining a directive, e.g. a list of ReplacementTuples.
+    Wait, isn't it easier to just call this "directive ops" (plural)? I.e. a list of operations?
+
+Transformation, directive transform: the functional expression/implementation of a directive, e.g.
+    function(text) --> transformed_text
+
+
+Obsolete nomenclature / not used:
+* Directive group: Old name for "directive def", group because it has multiple "operations".
+* subs_def: A ReplacementTuple.
+* subs_defs: A list of ReplacementTuples.
 
 
 
 """
 
 import os
-import pprint
+from pprint import pprint
 from argparse import ArgumentParser
 
-from .data import DEFAULT_PATTERNS, DEFAULT_FILE_DIRECTIVES, predefined_directives
-from .pattern_utils import str_patterns_to_list, load_patterns, substitute_patterns
-
-
-# formats_loaders = {
-#     '.txt': str_patterns_to_list,
-#     # '.yml': yaml.load if yaml else None,
-#     '.json': json.loads
-# }
+# from .data import DEFAULT_FILE_DIRECTIVES
+from tts_preprocessor.directives import REGISTERED_DIRECTIVE_DEFS, DEFAULT_FILE_DIRECTIVES
+from .pattern_utils import load_patterns, substitute_patterns
 
 
 def default_argparser(**ap_kwargs):
@@ -49,7 +63,11 @@ def process_file(inputfile, directives, outputfnfmt=None, inputencoding=None, ou
         print("Reading file:", inputfile)
         content = fp.read()
 
-    content = substitute_patterns(content, directives, verbose=verbose)
+    # print(directives)
+    # print()
+    for directive_def in directives:
+        print(directive_def)
+        content = substitute_patterns(content, directive_def, verbose=verbose)
     # filepath = /mydirectory/myfile.ext
     # basename = myfile.ext  (or sometimes just `myfile` - os.path.basename() returns WITH extension)
     # filename = myfile.ext  (or sometimes just `myfile` and other times the whole filepath)
@@ -68,24 +86,28 @@ def process_file(inputfile, directives, outputfnfmt=None, inputencoding=None, ou
 def select_directives(patternsfile, named_directives, inputfile):
     """This depends on `data` module, `data` module depends on `pattern_utils`. Keep func here to void circular refs."""
     if patternsfile is not None:
-        directives = load_patterns(patternsfile)
-    elif named_directives:
-        directives = []
-        for name in named_directives:
-            directives.append(predefined_directives[name])
+        directive_defs = [load_patterns(patternsfile)]
     else:
-        fnbase, fnext = os.path.splitext(inputfile)
-        inputfiletype = fnext.strip('.')
-        if inputfiletype in DEFAULT_FILE_DIRECTIVES:
-            directive_name = DEFAULT_FILE_DIRECTIVES[inputfiletype]
-            print("Using %s directive (based on input file extension '%s')..." % (directive_name, inputfiletype,))
-        else:
-            directive_name = DEFAULT_FILE_DIRECTIVES["txt"]
-            print("Could not determine which directive(s) to use; defaulting to %s patterns directive."
-                  % (directive_name,))
-        directives = predefined_directives[directive_name]
-        # directives = str_patterns_to_list(directives)
-    return directives
+        if not named_directives:
+            fnbase, fnext = os.path.splitext(inputfile)
+            inputfiletype = fnext.strip('.')
+            if inputfiletype in DEFAULT_FILE_DIRECTIVES:
+                named_directives = DEFAULT_FILE_DIRECTIVES[inputfiletype]
+                print("Using %s directive (based on input file extension '%s')..." % (named_directives, inputfiletype,))
+            else:
+                named_directives = DEFAULT_FILE_DIRECTIVES["txt"]
+                print("Could not determine which directive(s) to use; defaulting to %s patterns directive."
+                      % (named_directives,))
+        # print(named_directives)
+        # print("\n\nREGISTERED_DIRECTIVE_DEFS:")
+        # pprint(REGISTERED_DIRECTIVE_DEFS)
+        # print("\n\n")
+
+        directive_defs = [REGISTERED_DIRECTIVE_DEFS[name] for name in named_directives]
+        # print("\n\ndirective_defs:")
+        # print(directive_defs)
+        # print("\n\n")
+    return directive_defs
 
 
 def process_all_inputfiles(

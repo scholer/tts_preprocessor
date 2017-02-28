@@ -1,4 +1,5 @@
 
+
 import os
 import re
 from pprint import pprint
@@ -24,7 +25,7 @@ for fn in os.listdir(DATADIR):
 # print("\npredefined_pattern_strs:")
 # pprint(predefined_pattern_strs)
 # print("\npredefined_directives:")
-# pprint(predefined_directives)
+# pprint(REGISTERED_DIRECTIVE_DEFS)
 
 DEFAULT_TXT_PATTERNS = predefined_pattern_strs['default_txt']
 DEFAULT_HTML_PATTERNS = predefined_pattern_strs['default_html']

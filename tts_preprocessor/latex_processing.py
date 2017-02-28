@@ -164,27 +164,36 @@ import pylatexenc.latex2text
 import pylatexenc.latexwalker
 
 
-from .common import substitute_patterns
-from tts_preprocessor.pattern_utils import str_patterns_to_list, substitute_patterns
-from .data import DEFAULT_TEX_PATTERNS
+# from .common import substitute_patterns
+# from tts_preprocessor.pattern_utils import str_patterns_to_list, substitute_patterns
+# from .data import DEFAULT_TEX_PATTERNS
 
 
-def substitute_latex(string, directives=None):
-    """"""
-    if directives is None:
-        directives = [str_patterns_to_list(DEFAULT_TEX_PATTERNS)]
-
-    # Do latex-specific pre-processing:
-
-    # Perform standard regex/string substitutions:
-    string = substitute_patterns(string, directives)
-
-    # Do latex-specific post-transformations:
-
-    return string
+# def substitute_latex(string, directives=None):
+#     """"""
+#     if directives is None:
+#         directives = [str_patterns_to_list(DEFAULT_TEX_PATTERNS)]
+#
+#     # Do latex-specific pre-processing:
+#
+#     # Perform standard regex/string substitutions:
+#     string = substitute_patterns(string, directives)
+#
+#     # Do latex-specific post-transformations:
+#
+#     return string
 
 
 def pylatexenc_convert(tex):  # , extra_env_defs=None, extra_macro_defs=None, extra_text_replacements=None):
+    """
+    Pros and cons using pylatexenc:
+    * Parser seems pretty self-rolled.
+    * Doesn't handle e.g. two optional arguments, so \chapter[short title][header title]{full title} craps up.
+        (two optional arguments is not allowed by LaTeX, but is OK for e.g. ConTeXt.)
+
+    :param tex:
+    :return:
+    """
     # from importlib import reload
     # reload(pylatexenc)
     # reload(pylatexenc.latexwalker)
@@ -199,6 +208,7 @@ def pylatexenc_convert(tex):  # , extra_env_defs=None, extra_macro_defs=None, ex
     macro_repr_dict = pylatexenc.latex2text.default_macro_dict.copy()
     macro_repr_keys = ("macname", "simplify_repl", "discard")
     # Can't use string input, need to have True/False column.
+    # macname, repl, ignore
     extra_macro_reprs = [ # """
         ("includegraphics",	None,			True),
         ("cite",		None,				True),
@@ -238,7 +248,7 @@ def pylatexenc_convert(tex):  # , extra_env_defs=None, extra_macro_defs=None, ex
     extra_macro_reprs = {d['macname']: MacroDef(**d) for d in extra_macro_reprs}
     macro_repr_dict.update(extra_macro_reprs)
 
-    # Define the extra macros for latexwalker (to capture macro arguments):
+    # Define the extra macros for latexwalker nodes (to capture macro arguments):
     numargs = {
         "SI": 2,
         "SIrange": 2,
@@ -262,6 +272,7 @@ def pylatexenc_convert(tex):  # , extra_env_defs=None, extra_macro_defs=None, ex
         ("   ", " "),
         ("  ", " "),
         ("  ", " "),
+        ("  ", " "),
         (" .", "."),
         (" , ", ", "),
         ("\n ", "\n"),
@@ -277,17 +288,19 @@ def pylatexenc_convert(tex):  # , extra_env_defs=None, extra_macro_defs=None, ex
         ("∼", "approximately"),
         (" nt", " nucleotide"),
         (" nts", " nucleotides"),
-        ("et al.", "an co-workers"),
+        ("et al.", "and co-workers"),
         ("e.g.", "for example"),
         ("i.e.", "that is,"),
 
         # Hyphens, etc:
         ("---", "—"),  # em-dash
-        # ("--", "—"),  # en-dash
-        ("--", "-"),  # hyphen
+        ("--", "—"),  # en-dash
+        # ("--", "-"),  # hyphen
 
         # Other;
         ("°", " degree "),  # hyphen
+        ("T_m", "melting temperature"),  # hyphen
+        ("T_ m", "melting temperature"),  # hyphen
 
         # Specialized:
         ("OH", "hydroxyl"),
@@ -310,12 +323,29 @@ def pylatexenc_convert(tex):  # , extra_env_defs=None, extra_macro_defs=None, ex
         # ("TALENs", "Ta-lens"),
         # 3,5-difluoro-4-hydroxybenzylidene
 
+        # Trim excessive white space:
+        ("  ", " "),
+        ("  ", " "),
+
+    ]
+    # TODO: Disabled text replacements while checking grammar!!
+    # TODO: Just move all text replacements outside of this function and let this only deal with latex macros.
+    extra_text_replacements = [
+        # Trim excessive white space:
+        (" MB", "molecular beacon"),
+        ("   ", " "),
+        ("  ", " "),
+        ("  ", " "),
+        (" .", "."),
+        (" ,", ","),
+
     ]
     if extra_text_replacements:
         text_replacements.extend(extra_text_replacements)
 
     parser = pylatexenc.latexwalker.LatexWalker(
-        tex, macro_dict=macro_node_defs,
+        tex,
+        macro_dict=macro_node_defs,
         keep_inline_math=False,  # True
         tolerant_parsing=False,
         strict_braces=False
@@ -362,7 +392,7 @@ def main():
             print(e.__class__.__name__, e)
             print(" - skipping this file (%s)..." % (file,))
             continue
-        outputfile = argns.outputfnfmt.format(texfile=file, inputfn=file, ext=".txt")
+        outputfile = os.path.normpath(argns.outputfnfmt.format(texfile=file, inputfn=file, ext=".txt"))
         with open(outputfile, "w") as fp:
             fp.write(text)
         print("Text written to file:", os.path.abspath(outputfile))
