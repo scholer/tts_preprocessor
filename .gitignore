@@ -90,3 +90,6 @@ ENV/
 
 # IDE:
 .idea/
+
+# Ignoring Jupyter Notebooks, for now:
+*.ipynb
