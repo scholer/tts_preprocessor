@@ -1,6 +1,37 @@
 
 """
 
+## OBS: Nomenclature:
+
+* A *single* "def" is a single row, dict, or tuple, providing a search_pattern and replace_pattern,
+    and is used for a single search-replace operation.
+* "def" or "definition" is typically used on the input side, while "operation" is used
+* Synonyms: "def" = "definition" = "pattern definition" = "search replace operation definition"
+* "defs" is a list of these pattern definitions.
+
+* "directive" is a list of pattern definitions, and is used for registering "named directives".
+    "directive_defs" is often used to distinguish this from "directive_name".
+
+
+TODO: I should make the terms more clear or consistent. I use the following terms:
+TODO: "defs" ("definitions"), "directives", and "operations" (and "directive_ops" and "directive_def").
+
+* I think this is an evolutionary thing - first they were called "definitions"
+   then "directives", and then "operations"?
+
+* Also inconsistent use whether "directive" is *a single* search-replace, or the full list.
+* `common.process_file()` has "directive" as a "list of search-replace operations".
+    Here, "directive" is a "general, filetype-specific processing", e.g.
+    "perform standard text replacements", or "perform latex-specifc operations".
+* "Directive" is either:
+    "directive_name" - e.g. 'latex_to_text'
+    "directive_defs" - a list of
+* "definitions" is mostly used on the input side, while "operations" is mostly used on the other end.
+* See also `directives.py` for a nomenclature list.
+
+
+TODO: You have a lot of things here that are defined but not really used anywhere,
+TODO: e.g. the `PATTERN_TYPES`, `REGEX_TYPE`, and `FIXED_TYPE` constants.
 
 "Substitute" or "Replace"?  (substitution or replacement)
 * Generally treated as SYNONYMS, but slight syntactic differences.
@@ -22,6 +53,7 @@ import yaml
 from itertools import zip_longest
 from pprint import pprint
 
+# TODO: Use a proper `enum` type
 PATTERN_TYPES = [
     "REGEX",  # 0 or None
     "FIXED"   # 1
@@ -39,11 +71,45 @@ SUBS_DEFAULTS_DICT = dict(zip(SUBS_DEFAULTS_KEYS, SUBS_DEFAULTS_VALS))
 ReplacementTuple.__new__.__defaults__ = SUBS_DEFAULTS_VALS  # must be a tuple object
 
 
-def pattern_defs_to_tuples(defs, options):
-    """Convert a list of pattern definitions (dicts) to ReplacementTuple (namedtuple).
+def substitute_patterns(string, directive, verbose=0):
+    """ Perform all regex/string substitutions listed in directive (one by one).
 
     Args:
-        defs: list or dict
+        string: The string to perform the search/replace operations on.
+        directive: A list of `ReplacementTuple`s (namedtuple).
+        verbose:
+
+    Returns:
+
+    """
+    for operation in directive:
+        # operation : ('search_pat', 'replace_pat', 'type', 'comment') namedtuple
+        if operation.type == 1:
+            if verbose > 0:
+                print("Replacing fixed-string: %s --> %s" % (operation.search_pat, operation.replace_pat))
+            string = string.replace(operation.search_pat, operation.replace_pat)
+        else:
+            if verbose > 0:
+                print("Replacing using regex: %s --> %s" % (operation.search_pat, operation.replace_pat))
+            string = re.sub(pattern=operation.search_pat, repl=operation.replace_pat or "", string=string)
+    return string
+
+
+def pattern_defs_to_tuples(defs, options):
+    """ Convert a list of pattern definitions (dicts or lists/tuples) to ReplacementTuple (namedtuple).
+
+    This basically ensures that `defs` is converted to the proper format, ready for consumption by
+    `substitute_patterns()`.
+
+    Args:
+        defs: list of pattern definitions (list of dicts or lists/tuples).
+            defs can also be a dict, mapping {search_pat: replace_pat}.
+        options: This can be used to set e.g. default value.
+            For example, pass `options={"type": FIXED_TYPE}` to use fixed strings as the default value.
+
+    Returns:
+
+        directive_ops: A list of `ReplacementTuple`s (namedtuple).
 
     """
     if options is None:
@@ -53,11 +119,13 @@ def pattern_defs_to_tuples(defs, options):
         defaults.update(options['defaults'])
     if 'type' in options:
         defaults['type'] = options['type']
-    directives = []
+    directive_ops = []
     if isinstance(defs, dict):
-        # List of search_pat: replace_pat OR (replace_pat, type, comment) tuple
-        # convert to list of defs:
+        # defs is a simple dict, mapping {search_pat: replace_pat}
+        # OR {search_pat: (replace_pat, type, comment)-tuple}
+        # convert dict to list of defs:
         defs = [[key] + val if isinstance(val, (list, tuple)) else [key, val] for key, val in defs.items()]
+
     for definition in defs:
         def_default = defaults.copy()
         if not isinstance(definition, dict):
@@ -65,21 +133,23 @@ def pattern_defs_to_tuples(defs, options):
             def_default.update(zip(REPLACEMENTTUPLEARGS, definition))
         else:
             def_default.update(definition)
+        operation = ReplacementTuple(**def_default)
+        directive_ops.append(operation)
 
-        # OBS: NamedTuples are immutable, must update before:
-        # if options.get('space_prefix'):
-        #     directive.replace_pat = " " + directive.replace_pat
-        # if options.get('space_postfix'):
-        #     directive.replace_pat += " "
-
-        directive = ReplacementTuple(**def_default)
-
-
-        directives.append(directive)
-    return directives
+    return directive_ops
 
 
 def tsv_to_list(tsv_input, sep=None, trim_line_comments=True):
+    """ Read tab-separated input, return as a list of rows (lists).
+
+    Args:
+        tsv_input: Tab-separated input, either as text string, a file-like object, or an iterable.
+        sep: The separator to use, defaulting to TAB.
+        trim_line_comments: Will remove "# comment" for all lines.
+
+    Returns:
+        A list of rows.
+    """
     if sep is None:
         sep = "\t"
     if hasattr(tsv_input, 'read'):
@@ -103,10 +173,26 @@ def tsv_to_list(tsv_input, sep=None, trim_line_comments=True):
 
 
 def extract_first_line_config(input, commentchar="#"):
+    """ Extract per-file configuration line.
+    The first line must begin with "# {"  (i.e. a hash symbol, a space, and an opening brace).
+    This can be used to create pattern definition files, where
+
+    Args:
+        input:
+        commentchar:
+
+    Returns:
+
+    """
     if isinstance(input, str):
-        input = input.strip().split("\n")[0]
+        input = input.strip().split("\n")[0]  # Select the first non-empty line.
     elif hasattr(input, 'readline'):
         # Assume file-like object:
+        # This isn't completely fool-proof:
+        # * There is a chance that this will skip the first non-comment line.
+        # * There is also a chance that the first line is empty.
+        # * But pattern definition files should always contain a comment at the top,
+        #   and the first-line-config should always be at the very first line anyways.
         input = input.readline().strip()
     else:
         # Assume list of lines:
@@ -136,7 +222,24 @@ def parse_pattern_txt_defs_to_list(patterns_str, sep='\t', options=None, extract
 
 
 def load_patterns_defs(filename, format=None, name=None, **kwargs):
-    """Load substitution (replacement) definitions/patterns from file."""
+    """ Load substitution (replacement) definitions/patterns from file.
+
+    This supports both simple "text-definitions", but can also be used to dump
+    a complete "workspace settings" to file (json, yaml, or pickle).
+
+    Args:
+        filename:
+        format:
+        name:
+        **kwargs:
+
+    Returns:
+
+    If the file is a "full workspace" JSON, YAML or Pickle file, it is expected to
+    contain a single dict, with the following keys:
+        "substitutions":
+        "options":
+    """
 
     fnbase, fnext = os.path.splitext(filename)
     if format is None and fnext:
@@ -178,7 +281,7 @@ def load_patterns_defs(filename, format=None, name=None, **kwargs):
     return name, directives
 
 
-# OLD!!
+# OLD!! - replaced by `parse_pattern_txt_defs_to_list`
 def str_patterns_to_list(patterns_str, sep='\t', options=None):
     """Convert standard 1-pattern-per-line text string to a list of (search, replace, type, comment) NamedTuples."""
     if sep is None:
@@ -226,18 +329,5 @@ def load_patterns(filename, format=None, name=None, **kwargs):
     else:
         directives = str_patterns_to_list(content, **kwargs)
     return directives
-
-
-def substitute_patterns(string, directive, verbose=0):
-    """Perform all regex/string substitutions listed in directive (one by one)."""
-    for operation in directive:
-        # operation : ('search_pat', 'replace_pat', 'type', 'comment') namedtuple
-        if operation.type == 1:
-            string = string.replace(operation.search_pat, operation.replace_pat)
-        else:
-            if verbose > 0:
-                print("Replacing using regex: %s --> %s" % (operation.search_pat, operation.replace_pat))
-            string = re.sub(pattern=operation.search_pat, repl=operation.replace_pat or "", string=string)
-    return string
 
 

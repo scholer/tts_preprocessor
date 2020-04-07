@@ -84,7 +84,21 @@ def process_file(inputfile, directives, outputfnfmt=None, inputencoding=None, ou
 
 
 def select_directives(patternsfile, named_directives, inputfile):
-    """This depends on `data` module, `data` module depends on `pattern_utils`. Keep func here to void circular refs."""
+    """ Automatically select the directives to use.
+
+    A "directive" is understood in the general sense, "what should be done".
+    It can be either a
+    We can make it a bit more precise: A "directive_defs" is a list of search-replace pattern definitions.
+
+    Args:
+        patternsfile:
+        named_directives:
+        inputfile:
+
+    Returns:
+
+    OBS: This depends on `data` module, `data` module depends on `pattern_utils`. Keep func here to void circular refs.
+    """
     if patternsfile is not None:
         directive_defs = [load_patterns(patternsfile)]
     else:

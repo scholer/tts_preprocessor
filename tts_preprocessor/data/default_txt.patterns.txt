@@ -1,5 +1,8 @@
-# regex_type: 0=Python regex, 1=Fixed-string
 # search_pattern	replace_pattern	regex_type	# comment
+# Each line contains three tab-separated values (and an optional comment).
+# The `regex_type` is either numeric or a letter: 0,R=Regex, 1,F=Fixed-string
+# Regex is the default since, ultimatively, regex helps to prevent common mistakes,
+# e.g. replacing
 Å	 Angstrom 	1
 nm	 nanometer 	1
 um	 micrometer 	1

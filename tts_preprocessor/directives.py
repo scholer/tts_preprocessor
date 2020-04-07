@@ -28,8 +28,10 @@ from functools import partial
 
 from tts_preprocessor.pattern_utils import load_patterns_defs, substitute_patterns
 
-# DATADIR = os.path.join(os.path.dirname(__file__))
+# Data directory included with this library containing default .patterns.txt files:
 DATADIR = os.path.join(os.path.dirname(__file__), 'data')
+
+# Dict containing the registered directives: {directive_name: directive_defs}
 REGISTERED_DIRECTIVE_DEFS = {}
 REGISTERED_TRANSFORMATIONS = {}
 

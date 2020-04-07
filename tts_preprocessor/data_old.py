@@ -1,4 +1,14 @@
 
+"""
+
+This `data` module has been superseeded by the `directives` module.
+
+The reason for this is that I wanted to have a module that did not just contain pre-loaded
+data, but also had the logic to load and register directives.
+
+
+
+"""
 
 import os
 import re
